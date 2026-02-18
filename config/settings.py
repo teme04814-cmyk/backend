@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from urllib.parse import urlparse, unquote
 from .patches import apply_patches
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -69,8 +70,24 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-# Database: prefer explicit DB env vars for Postgres, otherwise SQLite
-if os.environ.get("DB_ENGINE"):
+# Database: DATABASE_URL (Render/Railway/Heroku) > DB_* vars > SQLite
+if database_url := os.environ.get("DATABASE_URL"):
+    # Parse DATABASE_URL (e.g. postgres://user:pass@host:port/dbname)
+    parsed = urlparse(database_url)
+    # Handle postgres:// vs postgresql://; decode password (may contain @, #, etc.)
+    engine = "django.db.backends.postgresql"
+    password = unquote(parsed.password) if parsed.password else os.environ.get("DB_PASSWORD", "")
+    DATABASES = {
+        "default": {
+            "ENGINE": engine,
+            "NAME": (parsed.path.lstrip("/") or os.environ.get("DB_NAME", "clms")).split("?")[0],
+            "USER": parsed.username or os.environ.get("DB_USER", "postgres"),
+            "PASSWORD": password,
+            "HOST": parsed.hostname or "localhost",
+            "PORT": str(parsed.port or 5432),
+        }
+    }
+elif os.environ.get("DB_ENGINE"):
     DATABASES = {
         "default": {
             "ENGINE": os.environ.get("DB_ENGINE"),
