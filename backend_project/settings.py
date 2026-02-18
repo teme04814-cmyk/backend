@@ -136,3 +136,14 @@ CORS_ALLOW_HEADERS = [
     "x-csrftoken",
     "x-requested-with",
 ]
+
+# Trust proxy SSL header on Render so Django treats requests as HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# CSRF trusted origins: include env list and Render external hostname
+CSRF_TRUSTED_ORIGINS = []
+_cs = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if _cs:
+    CSRF_TRUSTED_ORIGINS.extend([s.strip() for s in _cs.split(",") if s.strip()])
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")

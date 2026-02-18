@@ -135,6 +135,17 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "").split(",") if os.environ.get("CORS_ALLOWED_ORIGINS") else []
 CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "0") == "1"
 
+# Trust proxy SSL header on Render so Django treats requests as HTTPS
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# CSRF trusted origins: include env list and Render external hostname
+CSRF_TRUSTED_ORIGINS = []
+_cs = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if _cs:
+    CSRF_TRUSTED_ORIGINS.extend([s.strip() for s in _cs.split(",") if s.strip()])
+if RENDER_EXTERNAL_HOSTNAME:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+
 # In development, allow the frontend origin by default
 if DEBUG and not CORS_ALLOW_ALL_ORIGINS and not CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS = [
