@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse, HttpResponse
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -15,6 +16,8 @@ urlpatterns = [
     path("api/stats/", include("stats.urls")),
     path("api/system/", include("systemsettings.urls")),
     path("api/contact/", include("contact.urls")),
+    path("", lambda request: JsonResponse({"status": "ok"})),
+    path("healthz/", lambda request: HttpResponse("OK")),
 ]
 
 if settings.DEBUG:
